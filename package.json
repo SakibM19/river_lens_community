@@ -1,0 +1,3 @@
+{ "name": "riverlens", "version": "0.2.0", "private": true, "description": "RiverLens: community waterway observation prototype (shared database edition)",
+  "scripts": { "dev": "node dev-server.js", "test": "node test/run.js" },
+  "dependencies": { "@neondatabase/serverless": ">=0.10.0" }, "engines": { "node": ">=18" } }
