@@ -1,0 +1,57 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RiverLens</title><link rel="stylesheet" href="/style.css"></head><body>
+<header><div class="wrap bar"><div class="brand"><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#2f6b3f"/><path d="M16 5c6 3 8 9 4 14-2 2.500-5 3-8 2 0-6 1-12 4-16z" fill="#a8d672"/><path d="M16 8c-1 4-1 9 0 14" stroke="#2f6b3f" stroke-width="1.400" fill="none"/><path d="M5 23c3-3 5 3 9 0s6 3 9 0 4-1 4-1" stroke="#bfe6f7" stroke-width="2.200" fill="none" stroke-linecap="round"/></svg><span>RiverLens</span><small>cleaner waterways, starting with what we can see</small></div>
+<nav id="tabs"><button data-tab="feed" class="on">Community</button><button data-tab="upload">Share a photo</button><button data-tab="records">Records</button><button data-tab="review" id="revTab" hidden>Review <span id="qbadge" class="badge" hidden></span></button><button data-tab="impact">Our waterways</button><button data-tab="settings">Status</button></nav><div id="userArea" class="userarea"></div></div></header>
+<div id="modeBanner" class="banner" hidden></div>
+<main class="wrap">
+<section id="tab-feed">
+ <div class="hero"><div><h1>Protect your waterway by noticing it</h1><p class="lead">Healthy rivers, canals and ponds start with people who pay attention. Share a photo, see what others have noticed, and talk about it. RiverLens describes only what is <b>visible</b>, and a person always has the last word.</p>
+ <button class="btn" id="heroShare" type="button">Share a photo</button></div>
+ <ul class="pills"><li>🌱 Light and free to run</li><li>🤝 Built for community groups</li><li>🔍 Reviewed by people</li></ul></div>
+ <div id="feed"></div><div class="center"><button class="btn ghost" id="moreBtn" hidden type="button">Show more</button></div>
+</section>
+<section id="tab-upload" hidden>
+ <div id="needLogin" class="card" hidden><h2>Log in to share a photo</h2><p class="muted">Anyone can read the community feed. To post, comment or support a post, create a free account. It takes a few seconds.</p><button class="btn" id="needLoginBtn" type="button">Log in or sign up</button></div>
+ <div id="uploadWrap">
+ <h2 class="sec">Document a visible observation</h2>
+ <p class="lead small">Upload one photo of a river, canal or pond. RiverLens describes only what is <b>visible</b>. It does not test the water, judge safety or name a source of pollution.</p>
+ <div class="grid2">
+  <form id="upForm" class="card">
+   <div id="drop" class="drop" tabindex="0"><input type="file" id="file" accept="image/jpeg,image/png,image/webp" hidden><div id="dropText"><b>Choose a photo</b> or drop it here<br><span class="muted">JPEG, PNG or WEBP, up to 12 MB. Location data is removed automatically.</span></div><img id="preview" alt="" hidden></div>
+   <label>Site name<input id="site" placeholder="e.g. Buriganga, Sadarghat bridge" maxlength="120"></label>
+   <label>Note (optional)<textarea id="note" rows="3" maxlength="1000" placeholder="Anything you noticed on site"></textarea></label>
+   <button class="btn" id="sendBtn" disabled>Upload and analyse</button><div id="upMsg" class="msg"></div><p class="muted" style="margin-top:12px">Privacy: the photo is resized and stripped of location data in your browser. It is then saved in this site's shared database and, when AI analysis is on, sent to the AI provider to be described. Saved posts are visible to everyone who opens this site, so please do not include people's faces or private places.</p>
+  </form>
+  <div class="card" id="result"><h2>Result</h2><p class="muted">The AI draft appears here after upload.</p></div>
+ </div></div>
+</section>
+<section id="tab-records" hidden>
+ <h1>Records</h1>
+ <div class="card filters"><input id="fq" placeholder="Search site or note"><select id="fcat"><option value="">All categories</option></select>
+ <select id="frev"><option value="">Any review status</option><option value="pending">Needs review</option><option value="confirmed">Confirmed</option><option value="corrected">Corrected</option><option value="rejected">Rejected</option></select>
+ <input type="date" id="fdf" title="From"><input type="date" id="fdt" title="To"><a class="btn ghost" id="expBtn" href="#">Export CSV</a></div>
+ <div id="recList" class="list"></div>
+</section>
+<section id="tab-review" hidden>
+ <h1>Review queue</h1><p class="lead">Reviewers only. Findings that are uncertain, have an insufficient image or failed analysis. A person decides what becomes a verified record.</p>
+ <div id="revList" class="list"></div>
+</section>
+<section id="tab-impact" hidden>
+ <h1>Our waterways</h1><p class="lead">What your community has documented so far. These are visual observations, not water-quality measurements, and only reviewed records should be treated as verified.</p>
+ <div id="tiles" class="tiles"></div>
+ <div class="grid2"><div class="card"><h2>What was seen</h2><div id="catBars"></div></div><div class="card"><h2>Sites to keep an eye on</h2><div id="siteList"></div></div></div>
+ <div class="card green" id="greenNote"></div>
+</section>
+<section id="tab-settings" hidden>
+ <h1>Status</h1>
+ <div class="grid2"><div class="card" id="statusCard"></div>
+ <div class="card"><h2>Accounts</h2><p class="muted">Anyone can read the feed. People with an account can post, support and comment, and can delete only their own posts and comments. Reviewers can confirm, correct or reject AI findings and can remove any post or comment.</p></div></div>
+</section>
+</main>
+<div id="auth" class="modal" hidden><div class="mbox" style="max-width:420px"><button id="aclose" class="x" aria-label="Close" type="button">×</button>
+ <div class="seg"><button type="button" id="segIn" class="on">Log in</button><button type="button" id="segUp">Sign up</button></div>
+ <form id="authForm"><label>Username<input id="auser" autocomplete="username" maxlength="24" required></label><label>Password<input id="apass" type="password" autocomplete="current-password" required></label>
+ <p class="muted" id="ahint" hidden>3-24 letters or numbers. Password at least 8 characters.</p><button class="btn" id="asubmit" style="width:100%">Log in</button><div id="amsg" class="msg err"></div></form></div></div>
+<div id="modal" class="modal" hidden><div class="mbox"><button id="mclose" class="x" aria-label="Close">×</button><div id="mbody"></div></div></div>
+<footer class="wrap muted">🌿 RiverLens community edition v1 · open feed · visual observations only</footer>
+<script src="/app.js"></script></body></html>
