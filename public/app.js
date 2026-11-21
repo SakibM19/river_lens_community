@@ -15,7 +15,9 @@ const fmt=iso=>{const d=new Date(iso);if(isNaN(d))return iso||'';const p=n=>Stri
 const localDay=iso=>{const d=new Date(iso);const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`};
 const latest=o=>o.findings[0];
 let ME=null, STATUS={}, FEED_N=10;
-const isRev=()=>ME&&ME.role==='reviewer', canDel=o=>ME&&(isRev()||ME.id===o.user_id);
+const isRev=()=>ME&&ME.role==='reviewer', canDel=o=>isRev(), canRerun=o=>ME&&(isRev()||ME.id===o.user_id);
+const CONCERN=['visible_litter','litter_accumulation','surface_foam_or_film','unusual_surface_appearance'];
+const isConcern=r=>r.finding_status!=='rejected'&&CONCERN.includes(r.final_category||r.primary_category);
 const ini=n=>esc((n||'?').trim().charAt(0).toUpperCase());
 const row=r=>({...r,img:`/api/image?id=${r.id}&thumb=1`,needs_review:!!r.needs_review});
 
@@ -35,7 +37,8 @@ $$('#tabs button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
 function tags(r){const f=r.final_category||r.primary_category;let h='';
  if(r.obs_status==='analysing'){if(Date.now()-new Date(r.created_at)>180000)return '<span class="tag bad">Analysis did not finish</span>';return '<span class="tag"><span class="spin"></span>Analysing…</span>'}
  if(r.obs_status==='failed'||(!f&&r.error))return '<span class="tag bad">Analysis failed</span>';
- if(f)h+=`<span class="tag">${esc(CATS[f]||f)}</span>`;
+ if(r.finding_status!=='rejected'&&CONCERN.includes(f))h+='<span class="tag concern">⚠ Visible concern</span>';
+ if(f)h+=`<span class="tag ${r.finding_status!=='rejected'&&CONCERN.includes(f)?'bad':(f==='no_visible_indicator'?'ok':'')}">${esc(CATS[f]||f)}</span>`;
  if(r.uncertainty)h+=`<span class="tag ${r.uncertainty==='low'?'ok':'warn'}">Uncertainty: ${esc(r.uncertainty)}</span>`;
  const st={ai_draft:['AI draft','warn'],confirmed:['Confirmed','ok'],corrected:['Corrected','ok'],rejected:['Rejected','bad']}[r.finding_status];if(st)h+=`<span class="tag ${st[1]}">${st[0]}</span>`;
  if(r.mode==='demo')h+='<span class="tag demo">demo mode</span>';return h}
@@ -62,7 +65,7 @@ $('#upForm').onsubmit=async e=>{e.preventDefault();if(!chosen)return;const b=$('
 function resetUpload(){chosen=null;file.value='';$('#preview').hidden=true;$('#site').value='';$('#note').value='';$('#sendBtn').disabled=true;$('#upMsg').textContent='';$('#result').innerHTML='<h2>Result</h2><p class="muted">The AI draft appears here after upload.</p>'}
 function reportHTML(o,brief){const f=latest(o);if(!f)return '<p class="muted">No analysis yet.</p>';
  if(!f.report)return `<p class="msg err">Analysis failed: ${esc(f.error||'unknown error')}</p><p class="muted">The photo was saved. This record needs manual review, or you can re-run the analysis.</p>`;
- const r=f.report;let h=`<div class="tags"><span class="tag">${esc(CATS[r.primary_category])}</span><span class="tag ${r.uncertainty.level==='low'?'ok':'warn'}">Uncertainty: ${esc(r.uncertainty.level)}</span>${f.needs_review?'<span class="tag warn">Needs human review</span>':''}${f.mode==='demo'?'<span class="tag demo">demo mode, no AI used</span>':''}</div><dl>
+ const r=f.report;const fc=f.final_category||r.primary_category,cc=f.status!=='rejected'&&CONCERN.includes(fc);let h=`<div class="tags">${cc?'<span class="tag concern">⚠ Visible concern</span>':''}<span class="tag ${cc?'bad':(fc==='no_visible_indicator'?'ok':'')}">${esc(CATS[fc])}</span><span class="tag ${r.uncertainty.level==='low'?'ok':'warn'}">Uncertainty: ${esc(r.uncertainty.level)}</span>${f.needs_review?'<span class="tag warn">Needs human review</span>':''}${f.mode==='demo'?'<span class="tag demo">demo mode, no AI used</span>':''}</div><dl>
  <dt>What is visible</dt><dd>${esc(r.evidence_description)||'—'}</dd>${r.indicators.length?`<dt>Indicators</dt><dd>${r.indicators.map(esc).join(', ')}</dd>`:''}
  <dt>Why uncertain</dt><dd>${r.uncertainty.reasons.length?r.uncertainty.reasons.map(esc).join('<br>'):'—'}</dd><dt>Suggested follow-up</dt><dd>${esc(r.suggested_followup)||'—'}</dd></dl>
  <div class="lim">${esc(r.limitations_statement)}</div>`;
@@ -89,8 +92,8 @@ async function openDetail(id){const o=await api('/api/observation?id='+id);const
  <label>Comment (required when rejecting)<textarea id="rvCom" rows="2"></textarea></label>
  <div class="row"><button class="btn sm" data-d="confirm">Confirm AI finding</button><button class="btn sm ghost" data-d="correct">Save correction</button><button class="btn sm red" data-d="reject">Reject</button></div><div id="rvMsg" class="msg"></div></div>`;
  else if(done)rev=`<div class="revbox"><h2>Human review</h2>${done}</div>`}
- const mine=canDel(o);
- $('#mbody').innerHTML=`<h2>${esc(o.site)} <span class="muted">#${o.id} · ${esc(o.author||'earlier record')} · ${esc(fmt(o.created_at))}</span></h2><div class="det"><div><img src="/api/image?id=${o.id}" alt="photo"></div><div>${o.note?`<dl><dt>Note</dt><dd>${esc(o.note)}</dd></dl>`:''}${reportHTML(o)}<div class="row">${mine?'<button class="btn sm ghost" id="rerun">Re-run analysis</button><button class="btn sm ghost" id="delRec" style="color:var(--bad);border-color:var(--bad)">Delete post</button>':''}</div></div></div>${rev}`;
+ const mine=canRerun(o),mayDel=canDel(o);
+ $('#mbody').innerHTML=`<h2>${esc(o.site)} <span class="muted">#${o.id} · ${esc(o.author||'earlier record')} · ${esc(fmt(o.created_at))}</span></h2><div class="det"><div><img src="/api/image?id=${o.id}" alt="photo"></div><div>${o.note?`<dl><dt>Note</dt><dd>${esc(o.note)}</dd></dl>`:''}${reportHTML(o)}<div class="row">${mine?'<button class="btn sm ghost" id="rerun">Re-run analysis</button>':''}${mayDel?'<button class="btn sm ghost" id="delRec" style="color:var(--bad);border-color:var(--bad)">Delete post</button>':''}</div></div></div>${rev}`;
  $('#modal').hidden=false;
  if($('#rerun'))$('#rerun').onclick=async()=>{$('#mbody').innerHTML='<p><span class="spin"></span>Re-running…</p>';try{await post('/api/reanalyze',{id})}catch(e){}openDetail(id);refreshAll()};
  if($('#delRec'))$('#delRec').onclick=async()=>{if(confirm('Delete this post, its photo and its comments? This cannot be undone.')){try{await post('/api/delete',{id});closeModal();refreshAll()}catch(e){alert(e.message)}}};
@@ -117,21 +120,16 @@ async function loadSettings(){await loadStatus();let n='—';try{n=(await allRow
 // header user area + auth modal
 function renderUser(){const u=$('#userArea');
  u.innerHTML=ME?`<span class="who"><span class="avatar sm">${ini(ME.username)}</span><b>${esc(ME.username)}</b>${isRev()?'<span class="rolebadge">REVIEWER</span>':''}</span><button class="btn ghost sm" id="logoutBtn" type="button">Log out</button>`:'<button class="btn sm" id="loginBtn" type="button">Log in</button><button class="btn ghost sm" id="signupBtn" type="button">Sign up</button>';
- if($('#logoutBtn'))$('#logoutBtn').onclick=async()=>{try{await post('/api/auth',{action:'logout'})}catch(e){}ME=null;afterAuth()};
+ if($('#logoutBtn'))$('#logoutBtn').onclick=async()=>{try{await post('/api/auth',{action:'logout'})}catch(e){}location.href='/login.html?out=1'};
  if($('#loginBtn'))$('#loginBtn').onclick=()=>showAuth('in');if($('#signupBtn'))$('#signupBtn').onclick=()=>showAuth('up');
  $('#revTab').hidden=!isRev();if(!isRev()&&$$('#tabs button.on')[0]?.dataset.tab==='review')show('feed')}
-let authMode='in';
-function showAuth(m){authMode=m;$('#segIn').classList.toggle('on',m==='in');$('#segUp').classList.toggle('on',m==='up');$('#asubmit').textContent=m==='in'?'Log in':'Create account';$('#ahint').hidden=m==='in';
- $('#apass').autocomplete=m==='in'?'current-password':'new-password';$('#amsg').textContent='';$('#auth').hidden=false;$('#auser').focus()}
-$('#segIn').onclick=()=>showAuth('in');$('#segUp').onclick=()=>showAuth('up');$('#aclose').onclick=()=>$('#auth').hidden=true;
-$('#authForm').onsubmit=async e=>{e.preventDefault();const m=$('#amsg');m.textContent='';
- try{const d=await post('/api/auth',{action:authMode==='in'?'login':'register',username:$('#auser').value,password:$('#apass').value});ME=d.user;$('#auth').hidden=true;$('#apass').value='';await afterAuth()}catch(err){m.textContent=err.message}};
+function showAuth(m){location.href='/login.html?mode='+(m==='up'?'up':'in')}
 async function afterAuth(){await loadStatus();gateUpload();refreshAll();refreshBadge()}
 $('#needLoginBtn').onclick=()=>showAuth('in');$('#heroShare').onclick=()=>show('upload');
 
 // ---------- community feed ----------
 function postCard(r){const f=r.final_category||r.primary_category,del=canDel(r);
- return `<article class="post" data-id="${r.id}"><div class="ph"><span class="avatar">${ini(r.author||'?')}</span><div><b>${esc(r.author||'Earlier record')}${r.author_role==='reviewer'?' <span class="rolebadge">REVIEWER</span>':''}</b><span class="muted">${esc(r.site)} · ${esc(fmt(r.created_at))}</span></div></div>
+ return `<article class="post${isConcern(r)?' concern':''}" data-id="${r.id}"><div class="ph"><span class="avatar">${ini(r.author||'?')}</span><div><b>${esc(r.author||'Earlier record')}${r.author_role==='reviewer'?' <span class="rolebadge">REVIEWER</span>':''}</b><span class="muted">${esc(r.site)} · ${esc(fmt(r.created_at))}</span></div></div>
  ${r.note?`<div class="pnote">${esc(r.note)}</div>`:''}<img class="pimg" loading="lazy" src="/api/image?id=${r.id}" alt="photo at ${esc(r.site)}" data-open="${r.id}">
  <div class="ptags tags">${tags(r)}</div>
  <div class="acts"><button data-like="${r.id}" class="${r.mine?'on':''}">🌿 Support <span>${r.likes||''}</span></button><button data-cm="${r.id}">💬 Comments <span>${r.comments||''}</span></button><button data-open="${r.id}">Details</button><span class="grow"></span>${del?`<button class="danger" data-del="${r.id}">Delete</button>`:''}</div>

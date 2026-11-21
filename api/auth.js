@@ -19,6 +19,8 @@ module.exports=A.guard(async(req,res)=>{
     if(!A.limit(req,'login',10)) return res.status(429).json({error:'Too many attempts. Wait a minute.'});
     const u=(await d.query(`SELECT id,username,role,pass_hash FROM users WHERE username_lc=$1`,[name.toLowerCase()]))[0];
     if(!u||!(await PW.verify(pw,u.pass_hash))) return res.status(401).json({error:'Wrong username or password.'});
+    if(b.as==='reviewer'&&u.role!=='reviewer') return res.status(403).json({error:'This is not a reviewer account. Reviewer accounts are created by the project owner.'});
+    if(b.as==='member'&&u.role==='reviewer') return res.status(403).json({error:'This is a reviewer account. Please use the Reviewer tab to sign in.'});
     A.setSession(req,res,Number(u.id)); return res.status(200).json({user:{id:Number(u.id),username:u.username,role:u.role}});
   }
   res.status(400).json({error:'Unknown action.'});

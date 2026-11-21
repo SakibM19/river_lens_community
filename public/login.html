@@ -1,0 +1,21 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RiverLens: log in</title><link rel="stylesheet" href="/style.css"></head><body>
+<header><div class="wrap bar"><a class="brand" href="/" style="text-decoration:none"><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#2f6b3f"/><path d="M16 5c6 3 8 9 4 14-2 2.500-5 3-8 2 0-6 1-12 4-16z" fill="#a8d672"/><path d="M5 23c3-3 5 3 9 0s6 3 9 0 4-1 4-1" stroke="#bfe6f7" stroke-width="2.200" fill="none" stroke-linecap="round"/></svg><span>RiverLens</span></a>
+<a class="btn ghost sm" href="/">← Back to the community</a></div></header>
+<main class="wrap"><div class="loginpage">
+ <div id="outMsg" class="banner okbar" hidden>You have been logged out. See you soon. 🌿</div>
+ <div id="already" class="card" hidden><h2>You are signed in</h2><p id="whoLine" class="muted"></p><div class="row"><a class="btn sm" href="/" style="margin-top:0">Go to the community</a><button class="btn ghost sm" id="outBtn" type="button">Log out</button></div></div>
+ <div id="formCard" class="card">
+  <h1 style="margin:0 0 4px;font-size:22px">Join the conversation</h1>
+  <p class="muted" style="margin:0 0 14px">Anyone can read the community feed. To post, support or comment, log in with a community account. Reviewers sign in on their own tab.</p>
+  <div class="seg big"><button type="button" id="tabMember" class="on">Community member</button><button type="button" id="tabRev">Reviewer</button></div>
+  <div class="seg small" id="subSeg"><button type="button" id="subIn" class="on">Log in</button><button type="button" id="subUp">Create account</button></div>
+  <form id="lf"><label>Username<input id="u" autocomplete="username" maxlength="24" required></label>
+   <label>Password<input id="p" type="password" autocomplete="current-password" required></label>
+   <p class="muted" id="hint" hidden>3-24 letters, numbers, dot, dash or underscore. Password at least 8 characters.</p>
+   <p class="muted" id="revNote" hidden>Reviewer accounts are built in and created by the project owner. They cannot be created here.</p>
+   <button class="btn" id="go" style="width:100%">Log in</button><div id="msg" class="msg err"></div></form>
+ </div>
+ <p class="muted center"><a href="/">Continue as a visitor (read only)</a></p>
+</div></main>
+<script src="/login.js"></script></body></html>
